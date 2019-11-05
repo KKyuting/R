@@ -1,0 +1,97 @@
+college=read.csv("C:/Users/lo/Desktop/資料探勘/College.csv",header=T)
+#(1)
+summary(college)
+#(2)
+set.seed(1025)
+splitdata=function(data,p=0.7)
+{
+  index=sample(2,nrow(data),replace=TRUE,prob=c(p,1-p))
+  train=data[index==1,]
+  test=data[index==2,]
+  out=list(train=train,test=test)
+  return(out)
+}
+out=splitdata(college)
+train=out$train
+test=out$test
+summary(train)
+summary(test)
+#(3)
+glm.fit=glm(Private~Apps+F.Undergrad+PhD+Outstate+perc.alumni,data=train,family=binomial)
+summary(glm.fit)
+glm.probs=predict(glm.fit,type="response")
+glm.pred=rep("No",552)
+glm.pred[glm.probs>.5]="Yes"
+table(glm.pred,train$Private)
+(122+398)/552
+
+#(4)
+glm.fit=glm(Private~Apps+F.Undergrad+PhD+Outstate+perc.alumni,data=train,family=binomial)
+summary(glm.fit)
+glm.probs=predict(glm.fit,test,type="response")
+dim(Dtest)
+glm.pred=rep("No",225)
+glm.pred[glm.probs>.5]="Yes"
+table(glm.pred,test$Private)
+(62+148)/225
+#(5)_1
+library(MASS)
+lda.fit=lda(Private~Apps+F.Undergrad+PhD+Outstate+perc.alumni,data=train)
+lda.pred=predict(lda.fit)
+names(lda.pred)
+lda.class=lda.pred$class
+table(lda.class,train$Private)
+(115+402)/552
+#(5)_2
+lda.fit=lda(Private~Apps+F.Undergrad+PhD+Outstate+perc.alumni,data=train)
+lda.pred=predict(lda.fit,test)
+names(lda.pred)
+lda.class=lda.pred$class
+table(lda.class,test$Private)
+(59+151)/225
+#(6)_1
+qda.fit=qda(Private~Apps+F.Undergrad+PhD+Outstate+perc.alumni,data=train)
+qda.class=predict(qda.fit)$class
+table(qda.class,train$Private)
+(114+397)/552
+#(6)_2
+qda.fit=qda(Private~Apps+F.Undergrad+PhD+Outstate+perc.alumni,data=train)
+qda.class=predict(qda.fit,test)$class
+table(qda.class,test$Private)
+(58+149)/225
+#(7)_1
+library(class)
+train.X=cbind(train$Apps,train$F.Undergrad,train$PhD,train$Outstate,train$perc.alumni)
+test.X=cbind(test$Apps,test$F.Undergrad,test$PhD,test$Outstate,test$perc.alumni)
+train.private=train$Private
+set.seed(1)
+b=0
+for(i in c(1:200)){
+  knn.pred=knn(train.X,train.X,train.private,k=i)
+  a=table(knn.pred,train$Private)
+  result=(a[1,1]+a[2,2])/552
+  b[i]=result
+}
+which.max(b)
+max(b)
+knn.pred=knn(train.X,train.X,train.private,k=1)
+a=table(knn.pred,Dtrain$Private)
+a
+#(7)_2
+library(class)
+train.X=cbind(train$Apps,train$F.Undergrad,train$PhD,train$Outstate,train$perc.alumni)
+test.X=cbind(test$Apps,test$F.Undergrad,test$PhD,test$Outstate,test$perc.alumni)
+train.private=train$Private
+set.seed(1)
+b=0
+for(i in c(1:200)){
+  knn.pred=knn(train.X,test.X,train.private,k=i)
+  a=table(knn.pred,test$Private)
+  result=(a[1,1]+a[2,2])/225
+  b[i]=result
+}
+which.max(b)
+max(b)
+knn.pred=knn(train.X,test.X,train.private,k=5)
+a=table(knn.pred,Dtest$Private)
+a
